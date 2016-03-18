@@ -3,14 +3,22 @@ Node.js Export Strategies
 
 ## Overview
 
-We've covered `module.exports` in broad strokes, but what about the finer details?
-And what's up with being able to assign export properties directly to the `exports`
-object?
+We've covered `module.exports` in broad strokes, but what about the finer
+details? And what's up with being able to assign export properties directly to
+the `exports` object?
+
+At the end of this lesson, you'll be able to:
+
+1. Explain the difference between `module.exports` and `exports`
+2. Discuss ways for determining which strategy to use
+3. Evaluate tradeoffs between one strategy and another
+4. Recognize that, ultimately, the difference is one of style
 
 ## `module.exports`
 
-Basically, you want to use `module.exports` when you want to export a function or a constructor.
-(Remember that a constructor is just a function that expects to be invoked with `new`: `new Constructor()`.)
+Basically, you want to use `module.exports` when you want to export a function
+or a constructor. (Remember that a constructor is just a function that expects
+to be invoked with `new`: `new Constructor()`.)
 
 ```javascript
 // lamp.js
@@ -175,6 +183,145 @@ powerLimits.maxBrightness;
 ```
 
 And everything will work exactly as before.
+
+## When will I ever even use this?
+
+Admittedly, the above examples are a bit contrived in the name of being easy to
+run anywhere. With a view towards building an actual application, you might be
+wondering how to decide which exports pattern to use.
+
+The good news is, it's up to you. There isn't really a right or wrong answer,
+and there are good reasons for each approach.
+
+Let's say that you have a module that handles connecting to a database. You
+might, to start, export the whole `Database` (a constructor that holds your
+connection info):
+
+```javascript
+// database.js
+
+// `pg` is a Node.js module for interacting
+// with PostgreSQL databases
+// https://github.com/brianc/node-postgres
+const pg = require('pg');
+
+function Database(url, config) {
+  this.url = url;
+  this.config = config;
+};
+
+Databse.prototype.query = function(queryString, callback) {
+  pg.connect(this.url, (err, client, done) => {
+    if (err) {
+      done();
+      return callback(err);
+    }
+
+    client.query.apply(queryString, (err, result) => {
+      callback(err, result);
+      done();
+    });
+  });
+};
+
+module.exports = Database;
+```
+
+Now you have a `Database` that you can pass around willy-nilly:
+
+```javascript
+// app.js
+
+const Database = require('./database.js');
+
+const db = new Database('postgres://localhost/my_database');
+
+db.query('select * from foo where foo.bar = 1', (err, result) => {
+  if (err) {
+    return console.error(err);
+  }
+
+  console.log(result);
+});
+```
+
+But maybe you don't want to keep track of all of that additional state — and,
+with this implementation, you might end up making too many connections to the
+database! (`pg` will actually prevent you from doing this, but suppose it _didn't_.)
+
+If you have those concerns, and if you want to expose just a limited set of
+functionality instead of a massive interface, you can export just the
+functionality that you need elsewhere.
+
+```javascript
+// database_config.js
+
+module.exports = {
+  database: 'my_database',
+  host: 'localhost',
+  password: process.env.DATABASE_PASSWORD,
+  port: 5432,
+  user: process.env.DATABASE_USER
+};
+```
+
+```javascript
+// database.js
+
+const pg = require('pg');
+
+// WHOA! Inline `require`!
+const client = new pg.Client(require('./database_config'));
+
+exports.query = function(queryString, callback) {
+  pg.connect(this.url, (err, client, done) => {
+    if (err) {
+      done();
+      return callback(err);
+    }
+
+    client.query.apply(queryString, (err, result) => {
+      callback(err, result);
+      done();
+    });
+  });
+};
+```
+
+Now we're only exposing the `query()` function, so other parts of our
+application can't affect the database connection.
+
+```javascript
+// app.js
+
+const db = require('./database');
+
+// Notice that there's no configuration or initialization
+// happening here -- we just jump straight to the query.
+
+db.query('select * from foo where foo.bar = 1', (err, result) => {
+  if (err) {
+    return console.error(err);
+  }
+
+  console.log(result);
+});
+```
+
+Pretty cool, right? You'll most likely end up playing around with both
+approaches in the applications that you build, figuring out how you like to use
+each one in different circumstances. What matters more than anything is that
+your code is readable, easy to use, and easy to understand.
+
+## A Final Note
+
+As the [Node.js docs themselves say](https://nodejs.org/api/modules.html#modules_exports_alias),
+feel free to use `module.exports` for everything — when you want to export
+properties, simply export an object: `module.exports = { foo: 'foo', bar: 1 }`.
+
+Ultimately, `module.exports` versus `exports` is a matter of style —
+semantically, they're basically the same.
+
 
 ## Resources
 
