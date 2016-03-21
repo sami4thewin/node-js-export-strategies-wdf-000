@@ -304,7 +304,7 @@ exports.query = function(queryString, callback) {
       return callback(err);
     }
 
-    client.query.apply(queryString, (err, result) => {
+    client.query(queryString, (err, result) => {
       callback(err, result);
       done();
     });
