@@ -55,12 +55,34 @@ Lamp.prototype.turnOff = function() {
 Lamp.prototype.turnOn = function() {
   this.currentBrightness = this.maxBrightness;
 };
-
-module.exports = Lamp;
 ```
 
 When you `require` a module that exports in this way, you'll be getting the
 whole shebang:
+
+```javascript
+// living_room.js
+
+const Lamp = require('./lamp');
+const myLamp = new Lamp(10);
+```
+
+Erm, wait a sec. Did you just get an error? `TypeError: Lamp is not a function`?
+While this error is an improvement over JavaScript's infamous `undefined is not
+a function`, it doesn't help us very much. Looking back over our code in
+`lamp.js`, let's figure out where we went wrong.
+
+Turns out, we didn't export anything from `lamp.js`. If we want to make a class
+available elsewhere, we need to tell Node.js explicitly what we're exporting
+from the file. We do this by modifying `module.exports`. Since we want to export
+the entire `Lamp` constructor in `lamp.js`, we can add the following to the
+bottom of the file:
+
+```javascript
+module.exports = Lamp.js;
+```
+
+Now, if we go back to `living_room.js`, and try to run our code again:
 
 ```javascript
 // living_room.js
@@ -76,6 +98,8 @@ myLamp.turnOn();
 // prints 10
 console.log(myLamp.currentBrightness);
 ```
+
+It works!
 
 ## `exports.property`
 
