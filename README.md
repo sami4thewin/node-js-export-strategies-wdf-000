@@ -3,9 +3,7 @@ Node.js Export Strategies
 
 ## Overview
 
-We've covered `module.exports` in broad strokes, but what about the finer
-details? And what's up with being able to assign export properties directly to
-the `exports` object?
+We've covered `module.exports` in broad strokes, but what about the finer details? And what's up with being able to assign export properties directly to the `exports` object?
 
 At the end of this lesson, you'll be able to:
 
@@ -16,9 +14,7 @@ At the end of this lesson, you'll be able to:
 
 ## `module.exports`
 
-Basically, you want to use `module.exports` when you want to export a function
-or a constructor. (Remember that a constructor is just a function that expects
-to be invoked with `new`: `new Constructor()`.)
+Basically, you want to use `module.exports` when you want to export a function or a constructor. (Remember that a constructor is just a function that expects to be invoked with `new`: `new Constructor()`.)
 
 ```javascript
 // lamp.js
@@ -57,8 +53,7 @@ Lamp.prototype.turnOn = function() {
 };
 ```
 
-When you `require` a module that exports in this way, you'll be getting the
-whole shebang:
+When you `require` a module that exports in this way, you'll be getting the whole shebang:
 
 ```javascript
 // living_room.js
@@ -67,16 +62,9 @@ const Lamp = require('./lamp');
 const myLamp = new Lamp(10);
 ```
 
-Erm, wait a sec. Did you just get an error? `TypeError: Lamp is not a function`?
-While this error is an improvement over JavaScript's infamous `undefined is not
-a function`, it doesn't help us very much. Looking back over our code in
-`lamp.js`, let's figure out where we went wrong.
+Erm, wait a sec. Did you just get an error? `TypeError: Lamp is not a function`? While this error is an improvement over JavaScript's infamous `undefined is not a function`, it doesn't help us very much. Looking back over our code in `lamp.js`, let's figure out where we went wrong.
 
-Turns out, we didn't export anything from `lamp.js`. If we want to make a class
-available elsewhere, we need to tell Node.js explicitly what we're exporting
-from the file. We do this by modifying `module.exports`. Since we want to export
-the entire `Lamp` constructor in `lamp.js`, we can add the following to the
-bottom of the file:
+Turns out, we didn't export anything from `lamp.js`. If we want to make a class available elsewhere, we need to tell Node.js explicitly what we're exporting from the file. We do this by modifying `module.exports`. Since we want to export the entire `Lamp` constructor in `lamp.js`, we can add the following to the bottom of the file:
 
 ```javascript
 module.exports = Lamp.js;
@@ -103,8 +91,7 @@ It works!
 
 ## `exports.property`
 
-Conversely, use `exports.myProperty` (where `myProperty` has a better name) when
-you want to export multiple props.
+Conversely, use `exports.myProperty` (where `myProperty` has a better name) when you want to export multiple props.
 
 ```javascript
 // power.js
@@ -126,9 +113,7 @@ exports.surge = function surge(device) {
 };
 ```
 
-Here, we're exporting two functions, `outage()` and `surge()` as properties of
-the `power.js` module. When we `require` it, we access them just like we access
-properties of any other object.
+Here, we're exporting two functions, `outage()` and `surge()` as properties of the `power.js` module. When we `require` it, we access them just like we access properties of any other object.
 
 ```javascript
 // living_room.js
@@ -154,8 +139,7 @@ console.log(`myLamp's current brightness: ${myLamp.currentBrightness}`);
 
 ## Export All the Things!
 
-Note that you aren't limited to exporting functions. You can export any valid
-bit of JavaScript. Thus:
+Note that you aren't limited to exporting functions. You can export any valid bit of JavaScript. Thus:
 
 ```javascript
 // power_limits.js
@@ -183,8 +167,7 @@ powerLimits.type;
 powerLimits.maxBrightness;
 ```
 
-Hmmm — look familiar? I wonder if we can rewrite `power_limits.js` to export
-properties:
+Hmmm — look familiar? I wonder if we can rewrite `power_limits.js` to export properties:
 
 ```javascript
 // power_limits.js
@@ -210,16 +193,11 @@ And everything will work exactly as before.
 
 ## When will I ever even use this?
 
-Admittedly, the above examples are a bit contrived in the name of being easy to
-run anywhere. With a view towards building an actual application, you might be
-wondering how to decide which exports pattern to use.
+Admittedly, the above examples are a bit contrived in the name of being easy to run anywhere. With a view towards building an actual application, you might be wondering how to decide which exports pattern to use.
 
-The good news is, it's up to you. There isn't really a right or wrong answer,
-and there are good reasons for each approach.
+The good news is, it's up to you. There isn't really a right or wrong answer, and there are good reasons for each approach.
 
-Let's say that you have a module that handles connecting to a database. You
-might, to start, export the whole `Database` (a constructor that holds your
-connection info):
+Let's say that you have a module that handles connecting to a database. You might, to start, export the whole `Database` (a constructor that holds your connection info):
 
 ```javascript
 // database.js
@@ -234,7 +212,7 @@ function Database(url, config) {
   this.config = config;
 };
 
-Databse.prototype.query = function(queryString, callback) {
+Database.prototype.query = function(queryString, callback) {
   pg.connect(this.url, (err, client, done) => {
     if (err) {
       done();
@@ -269,13 +247,9 @@ db.query('select * from foo where foo.bar = 1', (err, result) => {
 });
 ```
 
-But maybe you don't want to keep track of all of that additional state — and,
-with this implementation, you might end up making too many connections to the
-database! (`pg` will actually prevent you from doing this, but suppose it _didn't_.)
+But maybe you don't want to keep track of all of that additional state — and, with this implementation, you might end up making too many connections to the database! (`pg` will actually prevent you from doing this, but suppose it _didn't_.)
 
-If you have those concerns, and if you want to expose just a limited set of
-functionality instead of a massive interface, you can export just the
-functionality that you need elsewhere.
+If you have those concerns, and if you want to expose just a limited set of functionality instead of a massive interface, you can export just the functionality that you need elsewhere.
 
 ```javascript
 // database_config.js
@@ -312,8 +286,7 @@ exports.query = function(queryString, callback) {
 };
 ```
 
-Now we're only exposing the `query()` function, so other parts of our
-application can't affect the database connection.
+Now we're only exposing the `query()` function, so other parts of our application can't affect the database connection.
 
 ```javascript
 // app.js
@@ -332,19 +305,13 @@ db.query('select * from foo where foo.bar = 1', (err, result) => {
 });
 ```
 
-Pretty cool, right? You'll most likely end up playing around with both
-approaches in the applications that you build, figuring out how you like to use
-each one in different circumstances. What matters more than anything is that
-your code is readable, easy to use, and easy to understand.
+Pretty cool, right? You'll most likely end up playing around with both approaches in the applications that you build, figuring out how you like to use each one in different circumstances. What matters more than anything is that your code is readable, easy to use, and easy to understand.
 
 ## A Final Note
 
-As the [Node.js docs themselves say](https://nodejs.org/api/modules.html#modules_exports_alias),
-feel free to use `module.exports` for everything — when you want to export
-properties, simply export an object: `module.exports = { foo: 'foo', bar: 1 }`.
+As the [Node.js docs themselves say](https://nodejs.org/api/modules.html#modules_exports_alias), feel free to use `module.exports` for everything — when you want to export properties, simply export an object: `module.exports = { foo: 'foo', bar: 1 }`.
 
-Ultimately, `module.exports` versus `exports` is a matter of style —
-semantically, they're basically the same.
+Ultimately, `module.exports` versus `exports` is a matter of style — semantically, they're basically the same.
 
 
 ## Resources
